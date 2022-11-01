@@ -108,6 +108,7 @@ def bisect_impl(command, fixed, jitlist, indent=""):
 
 def run_bisect(command):
     prev_arg = ""
+    jitlist = None
     for arg in command:
         if arg.startswith("-Xjit-log-file") or (
             prev_arg == "-X" and arg.startswith("jit-log-file")
@@ -116,9 +117,22 @@ def run_bisect(command):
                 "Your command includes -X jit-log-file, which is incompatible "
                 "with this script. Please remove it and try again."
             )
+        if arg.startswith("-Xjit-list-file") or (
+            prev_arg == "-X" and arg.startswith("jit-list-file")
+        ):
+            if "=" not in arg:
+                sys.exit("Could not parse jit-list-file; missing '='")
+            _, _, jitlistfile = arg.rpartition("=")
+            if not jitlistfile:
+                sys.exit("Invalid jit-list-file; filename was empty")
+            with open(jitlistfile, "r") as f:
+                jitlist = sorted([line.rstrip("\n") for line in f])
         prev_arg = arg
 
-    jitlist = get_compiled_funcs(command)
+    if jitlist is not None:
+        logging.info("Using provided jit-list as initial jit-list")
+    else:
+        jitlist = get_compiled_funcs(command)
 
     logging.info("Verifying jit-list")
     if run_with_jitlist(command, jitlist):
