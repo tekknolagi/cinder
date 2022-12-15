@@ -1198,31 +1198,114 @@ void BuiltinLoadMethodElimination::Run(Function& irfunc) {
 
 // Sparse Simple Constant Propagation
 
-// Type meet(Type left, Type right) {
-//   meet(Top, x) = x for all x
-//   meet(Bottom, x) = Botom for all x
-//   meet(c_i, c_j) = c_i if c_i == c_j
-//   meet(c_i, c_j) = Bottom if c_i != c_j
-// }
+Type meet(Type left, Type right) {
+  //   meet(Top, x) = x for all x
+  if (left == TTop) {
+    return right;
+  }
+  //   meet(Bottom, x) = Bottom for all x
+  if (left == TBottom) {
+    return TBottom;
+  }
+  //   meet(c_i, c_j) = c_i if c_i == c_j
+  if (left.hasIntSpec() && right.hasIntSpec() &&
+      left.intSpec() == right.intSpec()) {
+    return left;
+  }
+  //   meet(c_i, c_j) = Bottom if c_i != c_j
+  return TBottom;
+}
 
-// void initialize(Register* n) {
-//   1. if n is defined by a Phi function, set Value(n) to Top
-//   2. if n's value is not known, set Value(n) to Top
-//   3. if n's value is a known constant c_i, set Value(n) to c_i
-//   4. if n's value cannot be known, set Value(n) to Bottom
-// }
+Type initialValue(Register* n) {
+  //   1. if n is defined by a Phi function, set Value(n) to Top
+  if (n->instr()->IsPhi()) {
+    return TTop;
+  }
+  //   3. if n's value is a known constant c_i, set Value(n) to c_i
+  if (n->type().hasIntSpec() || n->type().hasObjectSpec()) {
+    return n->type();
+  }
+  //   2. if n's value is not known, set Value(n) to Top
+  return TTop;
+  //   4. if n's value cannot be known, set Value(n) to Bottom
+  //   TODO(max): LoadArg? Result of function call?
+  return TBottom;
+}
 
-void SparseConditionalConstantPropagation::Run(Function&) {
+Type interpret(const Instr& instr, const UnorderedMap<Register*, Type>& value) {
+  switch (instr.opcode()) {
+    case Opcode::kPhi: {
+      Type result = TTop;
+      for (size_t i = 0; i < instr.NumOperands(); i++) {
+        result = meet(result, map_get_strict(value, instr.GetOperand(i)));
+      }
+      return result;
+      break;
+    }
+    case Opcode::kIntBinaryOp: {
+      auto& i = static_cast<const IntBinaryOp&>(instr);
+      Type left = map_get_strict(value, i.left());
+      Type right = map_get_strict(value, i.right());
+      if (!left.hasIntSpec() || !right.hasIntSpec()) {
+        return TTop;
+      }
+      Type type = instr.GetOutput()->type();
+      switch (i.op()) {
+        case BinaryOpKind::kAdd:
+          return Type::fromCInt(left.intSpec() + right.intSpec(), type);
+        default:
+          return TBottom;
+      }
+      break;
+    }
+    default:
+      return TBottom;
+  }
+}
+
+void SparseConditionalConstantPropagation::Run(Function& irfunc) {
   // Initialization Phase
   // WorkList = set()
-  //
+  UnorderedSet<Register*> worklist;
+  // TODO(max): Use Worklist type in Jit/util.h
+
   // for each SSA name n do
-  //   initialize(n)
   //   initialize Value(n) by rules specified in the text (above)
   //
   //   if Value(n) != Top then
   //     WorkList.add(n)
-  //
+  UnorderedMap<Register*, Type> value;
+  {
+    UnorderedSet<Register*> initialized;
+    auto visit = [&worklist, &initialized, &value](Register* n) {
+      if (initialized.count(n)) {
+        return;
+      }
+      Type type = initialValue(n);
+      if (type != TTop) {
+        worklist.insert(n);
+      }
+      // TODO(max): type is moved...?
+      value.insert_or_assign(n, type);
+      initialized.insert(n);
+    };
+
+    for (BasicBlock& block : irfunc.cfg.blocks) {
+      for (Instr& instr : block) {
+        for (size_t i = 0; i < instr.NumOperands(); i++) {
+          visit(instr.GetOperand(i));
+        }
+        if (instr.GetOutput()) {
+          visit(instr.GetOutput());
+        }
+      }
+    }
+  }
+  fprintf(stderr, "----------\n");
+  for (auto [reg, ty] : value) {
+    fprintf(stderr, "%s: %s\n", reg->name().c_str(), ty.toString().c_str());
+  }
+
   // while len(WorkList) > 0 do
   //   n = WorkList.pop()
   //
@@ -1235,6 +1318,34 @@ void SparseConditionalConstantPropagation::Run(Function&) {
   //
   //       if Value(m) != t then
   //         WorkList.add(m)
+  while (worklist.size() > 0) {
+    auto it = worklist.begin();
+    Register* n = *it;
+    worklist.erase(it);
+
+    for (BasicBlock& block : irfunc.cfg.blocks) {
+      for (Instr& instr : block) {
+        if (!instr.GetOutput()) {
+          continue;
+        }
+        if (!instr.Uses(n)) {
+          continue;
+        }
+        Register* m = instr.GetOutput();
+        if (map_get_strict(value, m) != TBottom) {
+          Type t = map_get_strict(value, m);
+          value.insert_or_assign(m, interpret(instr, value));
+          if (map_get_strict(value, m) != t) {
+            worklist.insert(m);
+          }
+        }
+      }
+    }
+  }
+  fprintf(stderr, "----------\n");
+  for (auto [reg, ty] : value) {
+    fprintf(stderr, "%s: %s\n", reg->name().c_str(), ty.toString().c_str());
+  }
 }
 
 } // namespace jit::hir
