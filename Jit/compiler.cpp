@@ -115,6 +115,7 @@ void Compiler::runPasses(
     runPass<jit::hir::BeginInlinedFunctionElimination>(irfunc, callback);
   }
   runPass<jit::hir::BuiltinLoadMethodElimination>(irfunc, callback);
+  runPass<jit::hir::SparseConditionalConstantPropagation>(irfunc, callback);
   runPass<jit::hir::Simplify>(irfunc, callback);
   runPass<jit::hir::CleanCFG>(irfunc, callback);
   runPass<jit::hir::DeadCodeElimination>(irfunc, callback);

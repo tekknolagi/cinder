@@ -59,6 +59,7 @@ PassRegistry::PassRegistry() {
   addPass(GuardTypeRemoval::Factory);
   addPass(BeginInlinedFunctionElimination::Factory);
   addPass(BuiltinLoadMethodElimination::Factory);
+  addPass(SparseConditionalConstantPropagation::Factory);
   // AllPasses is only used for testing.
   addPass(AllPasses::Factory);
 }
@@ -1193,6 +1194,47 @@ void BuiltinLoadMethodElimination::Run(Function& irfunc) {
     }
     reflowTypes(irfunc);
   }
+}
+
+// Sparse Simple Constant Propagation
+
+// Type meet(Type left, Type right) {
+//   meet(Top, x) = x for all x
+//   meet(Bottom, x) = Botom for all x
+//   meet(c_i, c_j) = c_i if c_i == c_j
+//   meet(c_i, c_j) = Bottom if c_i != c_j
+// }
+
+// void initialize(Register* n) {
+//   1. if n is defined by a Phi function, set Value(n) to Top
+//   2. if n's value is not known, set Value(n) to Top
+//   3. if n's value is a known constant c_i, set Value(n) to c_i
+//   4. if n's value cannot be known, set Value(n) to Bottom
+// }
+
+void SparseConditionalConstantPropagation::Run(Function&) {
+  // Initialization Phase
+  // WorkList = set()
+  //
+  // for each SSA name n do
+  //   initialize(n)
+  //   initialize Value(n) by rules specified in the text (above)
+  //
+  //   if Value(n) != Top then
+  //     WorkList.add(n)
+  //
+  // while len(WorkList) > 0 do
+  //   n = WorkList.pop()
+  //
+  //   for each operation op that uses n do
+  //     let m be the SSA name that op defines
+  //
+  //     if Value(m) != Bottom then
+  //       t = Value(m)
+  //       Value(m) = result of interpreting op over lattice values
+  //
+  //       if Value(m) != t then
+  //         WorkList.add(m)
 }
 
 } // namespace jit::hir

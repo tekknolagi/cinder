@@ -201,6 +201,17 @@ class BuiltinLoadMethodElimination : public Pass {
   }
 };
 
+class SparseConditionalConstantPropagation : public Pass {
+ public:
+  SparseConditionalConstantPropagation() : Pass("SparseConditionalConstantPropagation") {}
+
+  void Run(Function& irfunc) override;
+
+  static std::unique_ptr<SparseConditionalConstantPropagation> Factory() {
+    return std::make_unique<SparseConditionalConstantPropagation>();
+  }
+};
+
 class PassRegistry {
  public:
   PassRegistry();
