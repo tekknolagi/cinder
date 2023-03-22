@@ -380,7 +380,6 @@ Type outputType(
     case Opcode::kGetIter:
     case Opcode::kImportFrom:
     case Opcode::kImportName:
-    case Opcode::kInPlaceOp:
     case Opcode::kInvokeIterNext:
     case Opcode::kInvokeMethod:
     case Opcode::kLoadAttr:
@@ -397,6 +396,16 @@ Type outputType(
     case Opcode::kYieldFromHandleStopAsyncIteration:
     case Opcode::kYieldValue:
       return TObject;
+    case Opcode::kInPlaceOp: {
+      if (instr.GetOperand(0)->isA(TLongExact) && instr.GetOperand(1)->isA(TLongExact)) {
+        InPlaceOpKind op = static_cast<const InPlaceOp&>(instr).op();
+        if (op == InPlaceOpKind::kTrueDivide) {
+          return TFloatExact;
+        }
+        return TLongExact;
+      }
+      return TObject;
+    }
     case Opcode::kBuildString:
       return TMortalUnicode;
     case Opcode::kGetLength:

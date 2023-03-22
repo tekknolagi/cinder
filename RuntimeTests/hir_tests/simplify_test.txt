@@ -1754,3 +1754,78 @@ fun test {
   }
 }
 ---
+InplaceOpWithLongExactReturnsLongExact
+---
+# HIR
+fun test {
+  bb 0 {
+    v0 = LoadArg<0; "a", LongExact>
+    v1 = LoadArg<1; "b", LongExact>
+    v2 = InPlaceOp<Add> v0 v1
+    Return v2
+  }
+}
+---
+fun test {
+  bb 0 {
+    v0:LongExact = LoadArg<0, LongExact>
+    v1:LongExact = LoadArg<1, LongExact>
+    v2:LongExact = InPlaceOp<Add> v0 v1 {
+      FrameState {
+        NextInstrOffset 0
+      }
+    }
+    Return v2
+  }
+}
+---
+InplaceOpWithLongExactTrueDivideReturnsFloatExact
+---
+# HIR
+fun test {
+  bb 0 {
+    v0 = LoadArg<0; "a", LongExact>
+    v1 = LoadArg<1; "b", LongExact>
+    v2 = InPlaceOp<TrueDivide> v0 v1
+    Return v2
+  }
+}
+---
+fun test {
+  bb 0 {
+    v0:LongExact = LoadArg<0, LongExact>
+    v1:LongExact = LoadArg<1, LongExact>
+    v2:FloatExact = InPlaceOp<TrueDivide> v0 v1 {
+      FrameState {
+        NextInstrOffset 0
+      }
+    }
+    Return v2
+  }
+}
+---
+InplaceOpReturnsObject
+---
+# HIR
+fun test {
+  bb 0 {
+    v0 = LoadArg<0; "a", Long>
+    v1 = LoadArg<1; "b", Long>
+    v2 = InPlaceOp<Add> v0 v1
+    Return v2
+  }
+}
+---
+fun test {
+  bb 0 {
+    v0:Long = LoadArg<0, Long>
+    v1:Long = LoadArg<1, Long>
+    v2:Object = InPlaceOp<Add> v0 v1 {
+      FrameState {
+        NextInstrOffset 0
+      }
+    }
+    Return v2
+  }
+}
+---
