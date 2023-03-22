@@ -1,0 +1,5 @@
+{
+  "image": "ghcr.io/facebookincubator/cinder/python-build-env:latest",
+  "features": {
+  }
+}
