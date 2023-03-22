@@ -2740,7 +2740,7 @@ _PyClassLoader_EnsureVtable(PyTypeObject *self, int init_subclasses)
         /* Get the size of the next element which is a static class
          * in our mro, we'll build on it.  We don't care about any
          * non-static classes because we don't generate invokes to them */
-        PyTypeObject *next;
+        PyTypeObject *next = NULL;
         for (Py_ssize_t i = 1; i < mro_size; i++) {
             next = (PyTypeObject *)PyTuple_GET_ITEM(mro, i);
             if (is_static_type(next)) {
