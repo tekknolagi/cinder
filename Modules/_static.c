@@ -884,7 +884,7 @@ create_overridden_slot_descriptors_with_default(PyTypeObject *type)
     }
 
     PyObject *slots_with_default = NULL;
-    PyTypeObject *next;
+    PyTypeObject *next = NULL;
     for (Py_ssize_t i = 1; i < mro_size; i++) {
         next = (PyTypeObject *)PyTuple_GET_ITEM(mro, i);
         if (!(PyType_HasFeature(next, Ci_Py_TPFLAGS_IS_STATICALLY_DEFINED))) {
