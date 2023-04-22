@@ -1424,6 +1424,8 @@ void LoadFieldElimination::Run(Function& irfunc) {
           break;
         }
         default: {
+          // TODO(emacs): Throw away information if MemoryEffects suggest
+          // escape
           break;
         }
       }
