@@ -1372,6 +1372,13 @@ class State {
     return map_get_strict(attrs, obj).read(offset);
   }
 
+  void clearAffected(const Instr& instr) {
+    instr.visitUses([this](Register* reg) -> bool {
+      attrs.erase(reg);
+      return true;
+    });
+  }
+
  private:
   std::unordered_map<Register*, VirtualObject> attrs;
   friend std::ostream& operator<<(std::ostream& os, const State& state);
@@ -1424,8 +1431,10 @@ void LoadFieldElimination::Run(Function& irfunc) {
           break;
         }
         default: {
-          // TODO(emacs): Throw away information if MemoryEffects suggest
-          // escape
+          MemoryEffects effects = memoryEffects(instr);
+          if (effects.may_store != AEmpty) {
+            state.clearAffected(instr);
+          }
           break;
         }
       }

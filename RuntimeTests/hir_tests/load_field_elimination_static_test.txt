@@ -70,3 +70,50 @@ fun jittestmodule:test {
   }
 }
 ---
+DontRemoveLoadFieldAcrossMemoryEffects
+---
+class C:
+  def __init__(self):
+    self.a = 3
+
+def test():
+  c = C()
+  print(c)
+  return c.a
+---
+fun jittestmodule:test {
+  bb 0 {
+    v7:Nullptr = LoadConst<Nullptr>
+    v30:Nullptr = LoadConst<Nullptr>
+    v8:ObjectUser[C:Exact] = TpAlloc<C> {
+      FrameState {
+        NextInstrOffset 4
+        Locals<1> v7
+      }
+    }
+    v9:MortalFunc[function:0xdeadbeef] = LoadConst<MortalFunc[function:0xdeadbeef]>
+    v25:ImmortalLongExact[3] = LoadConst<ImmortalLongExact[3]>
+    StoreField<a@16> v8 v25 v30
+    v28:NoneType = LoadConst<NoneType>
+    v12:OptObject = LoadGlobalCached<0; "print">
+    v13:MortalObjectUser[builtin_function_or_method:print:0xdeadbeef] = GuardIs<0xdeadbeef> v12 {
+      Descr 'LOAD_GLOBAL: print'
+    }
+    v15:Object = VectorCall<1> v13 v8 {
+      FrameState {
+        NextInstrOffset 20
+        Locals<1> v8
+      }
+    }
+    v17:OptObject = LoadField<a@16, OptObject, borrowed> v8
+    v18:Object = CheckField<"a"> v17 {
+      GuiltyReg v8
+      FrameState {
+        NextInstrOffset 26
+        Locals<1> v8
+      }
+    }
+    Return v18
+  }
+}
+---
