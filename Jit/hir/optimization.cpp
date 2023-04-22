@@ -5,6 +5,7 @@
 #include "Python.h"
 #include "code.h"
 #include "internal/pycore_interp.h"
+#include "structmember.h" // PyMemberDef
 
 #include "Jit/compiler.h"
 #include "Jit/containers.h"
@@ -22,6 +23,7 @@
 
 #include <list>
 #include <memory>
+#include <ostream>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -59,6 +61,7 @@ PassRegistry::PassRegistry() {
   addPass(GuardTypeRemoval::Factory);
   addPass(BeginInlinedFunctionElimination::Factory);
   addPass(BuiltinLoadMethodElimination::Factory);
+  addPass(LoadFieldElimination::Factory);
   // AllPasses is only used for testing.
   addPass(AllPasses::Factory);
 }
@@ -344,7 +347,7 @@ void PhiElimination::Run(Function& func) {
 
 static bool isUseful(Instr& instr) {
   return instr.IsTerminator() || instr.IsSnapshot() ||
-      instr.asDeoptBase() != nullptr ||
+      (instr.asDeoptBase() != nullptr && !instr.IsTpAlloc()) ||
       (!instr.IsPhi() && memoryEffects(instr).may_store != AEmpty);
 }
 
@@ -1317,6 +1320,121 @@ void BuiltinLoadMethodElimination::Run(Function& irfunc) {
     }
     reflowTypes(irfunc);
   }
+}
+
+class VirtualObject {
+ public:
+  void write(size_t offset, Register* value) {
+    attrs[offset] = value;
+  }
+
+  Register* read(size_t offset) const {
+    return map_get(attrs, offset, nullptr);
+  }
+
+ private:
+  std::map<size_t, Register*> attrs;
+  friend std::ostream& operator<<(std::ostream& os, const VirtualObject& state);
+};
+
+std::ostream& operator<<(std::ostream& os, const VirtualObject& obj) {
+  const char* sep = "";
+  for (auto& [offset, attr] : obj.attrs) {
+    os << sep << "0x" << std::hex << offset << std::dec << ":" << *attr;
+    sep = ", ";
+  }
+  return os;
+}
+
+class State {
+ public:
+  void alloc(Register* reg, PyTypeObject* type, Register* null_obj) {
+    VirtualObject obj;
+    PyMemberDef* mp = PyHeapType_GET_MEMBERS((PyHeapTypeObject*)type);
+    Py_ssize_t n = Py_SIZE(type);
+    for (Py_ssize_t i = 0; i < n; i++, mp++) {
+      if (mp->type == T_OBJECT || mp->type == T_OBJECT_EX) {
+        obj.write(mp->offset, null_obj);
+      }
+    }
+    attrs.emplace(reg, std::move(obj));
+  }
+
+  bool isAllocated(Register* reg) const {
+    return attrs.find(reg) != attrs.end();
+  }
+
+  void store(Register* obj, size_t offset, Register* value) {
+    map_get_strict(attrs, obj).write(offset, value);
+  }
+
+  Register* load(Register* obj, size_t offset) const {
+    return map_get_strict(attrs, obj).read(offset);
+  }
+
+ private:
+  std::unordered_map<Register*, VirtualObject> attrs;
+  friend std::ostream& operator<<(std::ostream& os, const State& state);
+};
+
+std::ostream& operator<<(std::ostream& os, const State& state) {
+  os << "State {\n";
+  for (auto& [reg, attrs] : state.attrs) {
+    os << "  " << *reg << ": " << attrs << "\n";
+  }
+  os << "}";
+  return os;
+}
+
+// TODO(emacs): Make a meet function and meet() states to do inter-block
+// LoadElimination!
+void LoadFieldElimination::Run(Function& irfunc) {
+  UnorderedMap<Instr*, Instr*> replacements;
+  for (auto& block : irfunc.cfg.GetRPOTraversal()) {
+    State state;
+    for (auto& instr : *block) {
+      switch (instr.opcode()) {
+        case Opcode::kTpAlloc: {
+          auto alloc = static_cast<const TpAlloc*>(&instr);
+          Register* null_reg = irfunc.env.AllocateRegister();
+          LoadConst::create(null_reg, TNullptr)->InsertBefore(instr);
+          state.alloc(instr.GetOutput(), alloc->pytype(), null_reg);
+          break;
+        }
+        case Opcode::kStoreField: {
+          auto store = static_cast<const StoreField*>(&instr);
+          if (state.isAllocated(store->receiver())) {
+            // Only store information about allocations we know about to avoid
+            // object aliasing issues.
+            // TODO(emacs): De-duplicate writes
+            state.store(store->receiver(), store->offset(), store->value());
+          }
+          break;
+        }
+        case Opcode::kLoadField: {
+          auto load = static_cast<const LoadField*>(&instr);
+          if (state.isAllocated(load->receiver())) {
+            // Only load information about allocations we know about to avoid
+            // object aliasing issues.
+            if (Register* value =
+                    state.load(load->receiver(), load->offset())) {
+              replacements[&instr] = Assign::create(instr.GetOutput(), value);
+            }
+          }
+          break;
+        }
+        default: {
+          break;
+        }
+      }
+    }
+  }
+  for (auto& [instr, replacement] : replacements) {
+    instr->GetOutput()->set_instr(replacement);
+    instr->ReplaceWith(*replacement);
+  }
+  reflowTypes(irfunc);
+  CopyPropagation{}.Run(irfunc);
 }
 
 } // namespace jit::hir

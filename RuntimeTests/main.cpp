@@ -141,6 +141,9 @@ int main(int argc, char* argv[]) {
   register_test(
       "RuntimeTests/hir_tests/hir_builder_native_calls_test.txt",
       HIRTest::kCompileStatic);
+  register_test(
+      "RuntimeTests/hir_tests/load_field_elimination_static_test.txt",
+      HIRTest::kCompileStatic);
 
   wchar_t* argv0 = Py_DecodeLocale(argv[0], nullptr);
   if (argv0 == nullptr) {

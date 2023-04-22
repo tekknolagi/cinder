@@ -201,6 +201,17 @@ class BuiltinLoadMethodElimination : public Pass {
   }
 };
 
+class LoadFieldElimination : public Pass {
+ public:
+  LoadFieldElimination() : Pass("LoadFieldElimination") {}
+
+  void Run(Function& irfunc) override;
+
+  static std::unique_ptr<LoadFieldElimination> Factory() {
+    return std::make_unique<LoadFieldElimination>();
+  }
+};
+
 class PassRegistry {
  public:
   PassRegistry();

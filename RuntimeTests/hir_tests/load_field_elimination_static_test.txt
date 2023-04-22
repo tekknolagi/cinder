@@ -1,0 +1,72 @@
+LoadFieldEliminationStaticTest
+---
+InlineFunctionCalls
+Simplify
+BeginInlinedFunctionElimination
+LoadFieldElimination
+Simplify
+---
+RemoveLoadFieldBeforeStoreField
+---
+class C:
+  def __init__(self):
+    self.a = 3
+    self.b = 4
+
+def test():
+  return C()
+---
+fun jittestmodule:test {
+  bb 0 {
+    v22:Nullptr = LoadConst<Nullptr>
+    v3:ObjectUser[C:Exact] = TpAlloc<C> {
+      FrameState {
+        NextInstrOffset 4
+      }
+    }
+    v4:MortalFunc[function:0xdeadbeef] = LoadConst<MortalFunc[function:0xdeadbeef]>
+    v14:ImmortalLongExact[3] = LoadConst<ImmortalLongExact[3]>
+    StoreField<a@16> v3 v14 v22
+    v17:ImmortalLongExact[4] = LoadConst<ImmortalLongExact[4]>
+    StoreField<b@24> v3 v17 v22
+    v20:NoneType = LoadConst<NoneType>
+    Return v3
+  }
+}
+---
+RemoveLoadFieldAfterStoreField
+---
+class C:
+  def __init__(self):
+    self.a = 3
+    self.b = 4
+
+def test():
+  c = C()
+  return c.a + c.b
+---
+fun jittestmodule:test {
+  bb 0 {
+    v7:Nullptr = LoadConst<Nullptr>
+    v35:Nullptr = LoadConst<Nullptr>
+    v8:ObjectUser[C:Exact] = TpAlloc<C> {
+      FrameState {
+        NextInstrOffset 4
+        Locals<1> v7
+      }
+    }
+    v9:MortalFunc[function:0xdeadbeef] = LoadConst<MortalFunc[function:0xdeadbeef]>
+    v27:ImmortalLongExact[3] = LoadConst<ImmortalLongExact[3]>
+    StoreField<a@16> v8 v27 v35
+    v30:ImmortalLongExact[4] = LoadConst<ImmortalLongExact[4]>
+    StoreField<b@24> v8 v30 v35
+    v33:NoneType = LoadConst<NoneType>
+    UseType<LongExact> v27
+    UseType<LongExact> v30
+    UseType<ImmortalLongExact[3]> v27
+    UseType<ImmortalLongExact[4]> v30
+    v37:ImmortalLongExact[7] = LoadConst<ImmortalLongExact[7]>
+    Return v37
+  }
+}
+---
