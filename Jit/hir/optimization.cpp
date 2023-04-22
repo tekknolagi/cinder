@@ -1413,12 +1413,13 @@ void LoadFieldElimination::Run(Function& irfunc) {
           if (state.isAllocated(store->receiver())) {
             // Only store information about allocations we know about to avoid
             // object aliasing issues.
-            // TODO(emacs): De-duplicate writes
+            // TODO(emacs): De-duplicate stores
             state.store(store->receiver(), store->offset(), store->value());
           }
           break;
         }
         case Opcode::kLoadField: {
+          // TODO(emacs): De-duplicate loads
           auto load = static_cast<const LoadField*>(&instr);
           if (state.isAllocated(load->receiver())) {
             // Only load information about allocations we know about to avoid
