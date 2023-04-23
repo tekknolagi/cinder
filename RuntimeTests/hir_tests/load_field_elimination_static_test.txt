@@ -19,6 +19,8 @@ def test():
 fun jittestmodule:test {
   bb 0 {
     v22:Nullptr = LoadConst<Nullptr>
+    v23:Nullptr = LoadConst<Nullptr>
+    v24:Nullptr = LoadConst<Nullptr>
     v3:ObjectUser[C:Exact] = TpAlloc<C> {
       FrameState {
         NextInstrOffset 4
@@ -26,9 +28,9 @@ fun jittestmodule:test {
     }
     v4:MortalFunc[function:0xdeadbeef] = LoadConst<MortalFunc[function:0xdeadbeef]>
     v14:ImmortalLongExact[3] = LoadConst<ImmortalLongExact[3]>
-    StoreField<a@16> v3 v14 v22
+    StoreField<a@16> v3 v14 v24
     v17:ImmortalLongExact[4] = LoadConst<ImmortalLongExact[4]>
-    StoreField<b@24> v3 v17 v22
+    StoreField<b@24> v3 v17 v24
     v20:NoneType = LoadConst<NoneType>
     Return v3
   }
@@ -49,6 +51,7 @@ fun jittestmodule:test {
   bb 0 {
     v7:Nullptr = LoadConst<Nullptr>
     v35:Nullptr = LoadConst<Nullptr>
+    v36:Nullptr = LoadConst<Nullptr>
     v8:ObjectUser[C:Exact] = TpAlloc<C> {
       FrameState {
         NextInstrOffset 4
@@ -57,16 +60,16 @@ fun jittestmodule:test {
     }
     v9:MortalFunc[function:0xdeadbeef] = LoadConst<MortalFunc[function:0xdeadbeef]>
     v27:ImmortalLongExact[3] = LoadConst<ImmortalLongExact[3]>
-    StoreField<a@16> v8 v27 v35
+    StoreField<a@16> v8 v27 v36
     v30:ImmortalLongExact[4] = LoadConst<ImmortalLongExact[4]>
-    StoreField<b@24> v8 v30 v35
+    StoreField<b@24> v8 v30 v36
     v33:NoneType = LoadConst<NoneType>
     UseType<LongExact> v27
     UseType<LongExact> v30
     UseType<ImmortalLongExact[3]> v27
     UseType<ImmortalLongExact[4]> v30
-    v37:ImmortalLongExact[7] = LoadConst<ImmortalLongExact[7]>
-    Return v37
+    v38:ImmortalLongExact[7] = LoadConst<ImmortalLongExact[7]>
+    Return v38
   }
 }
 ---
@@ -85,6 +88,7 @@ fun jittestmodule:test {
   bb 0 {
     v7:Nullptr = LoadConst<Nullptr>
     v30:Nullptr = LoadConst<Nullptr>
+    v31:Nullptr = LoadConst<Nullptr>
     v8:ObjectUser[C:Exact] = TpAlloc<C> {
       FrameState {
         NextInstrOffset 4
@@ -93,7 +97,7 @@ fun jittestmodule:test {
     }
     v9:MortalFunc[function:0xdeadbeef] = LoadConst<MortalFunc[function:0xdeadbeef]>
     v25:ImmortalLongExact[3] = LoadConst<ImmortalLongExact[3]>
-    StoreField<a@16> v8 v25 v30
+    StoreField<a@16> v8 v25 v31
     v28:NoneType = LoadConst<NoneType>
     v12:OptObject = LoadGlobalCached<0; "print">
     v13:MortalObjectUser[builtin_function_or_method:print:0xdeadbeef] = GuardIs<0xdeadbeef> v12 {
@@ -130,4 +134,40 @@ def test(cond):
     return c.a
   return c.b
 ---
+fun jittestmodule:test {
+  bb 0 {
+    v10:Object = LoadArg<0; "cond">
+    v11:Nullptr = LoadConst<Nullptr>
+    v47:Nullptr = LoadConst<Nullptr>
+    v48:Nullptr = LoadConst<Nullptr>
+    v49:Nullptr = LoadConst<Nullptr>
+    v12:ObjectUser[C:Exact] = TpAlloc<C> {
+      FrameState {
+        NextInstrOffset 4
+        Locals<2> v10 v11
+      }
+    }
+    v13:MortalFunc[function:0xdeadbeef] = LoadConst<MortalFunc[function:0xdeadbeef]>
+    v39:ImmortalLongExact[3] = LoadConst<ImmortalLongExact[3]>
+    StoreField<a@16> v12 v39 v49
+    v42:ImmortalLongExact[4] = LoadConst<ImmortalLongExact[4]>
+    StoreField<b@24> v12 v42 v49
+    v45:NoneType = LoadConst<NoneType>
+    v17:ImmortalBool[True] = LoadConst<ImmortalBool[True]>
+    v26:CBool = PrimitiveCompare<Equal> v10 v17
+    v27:Bool = PrimitiveBoxBool v26
+    UseType<Bool> v27
+    v28:ImmortalBool[True] = LoadConst<ImmortalBool[True]>
+    v30:CInt32 = IntConvert<CInt32> v26
+    CondBranch<1, 2> v30
+  }
+
+  bb 1 (preds 0) {
+    Return v39
+  }
+
+  bb 2 (preds 0) {
+    Return v42
+  }
+}
 ---
