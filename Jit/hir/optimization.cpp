@@ -1336,6 +1336,20 @@ class VirtualObject {
     return attrs == other.attrs;
   }
 
+  void meet(const VirtualObject& other) {
+    for (auto it = attrs.begin(); it != attrs.end();) {
+      auto& [offset, value] = *it;
+      auto other_it = other.attrs.find(offset);
+      if (other_it == other.attrs.end() || other_it->second != value) {
+        it = attrs.erase(it);
+        continue;
+      }
+      JIT_CHECK(
+          value == it->second, "value mismatch! %s != %s", *value, *it->second);
+      it++;
+    }
+  }
+
  private:
   std::map<size_t, Register*> attrs;
   friend std::ostream& operator<<(std::ostream& os, const VirtualObject& state);
@@ -1388,13 +1402,15 @@ class State {
   }
 
   void meet(const State& other) {
-    for (auto& [reg, obj] : attrs) {
-      auto it = other.attrs.find(reg);
-      if (it == other.attrs.end()) {
-        attrs.erase(reg);
+    for (auto it = attrs.begin(); it != attrs.end();) {
+      auto& [reg, obj] = *it;
+      auto other_it = other.attrs.find(reg);
+      if (other_it == other.attrs.end()) {
+        it = attrs.erase(it);
         continue;
       }
-      obj.meet(it->second);
+      obj.meet(other_it->second);
+      it++;
     }
   }
 

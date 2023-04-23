@@ -52,6 +52,7 @@ fun jittestmodule:test {
     v7:Nullptr = LoadConst<Nullptr>
     v35:Nullptr = LoadConst<Nullptr>
     v36:Nullptr = LoadConst<Nullptr>
+    v37:Nullptr = LoadConst<Nullptr>
     v8:ObjectUser[C:Exact] = TpAlloc<C> {
       FrameState {
         NextInstrOffset 4
@@ -60,16 +61,16 @@ fun jittestmodule:test {
     }
     v9:MortalFunc[function:0xdeadbeef] = LoadConst<MortalFunc[function:0xdeadbeef]>
     v27:ImmortalLongExact[3] = LoadConst<ImmortalLongExact[3]>
-    StoreField<a@16> v8 v27 v36
+    StoreField<a@16> v8 v27 v37
     v30:ImmortalLongExact[4] = LoadConst<ImmortalLongExact[4]>
-    StoreField<b@24> v8 v30 v36
+    StoreField<b@24> v8 v30 v37
     v33:NoneType = LoadConst<NoneType>
     UseType<LongExact> v27
     UseType<LongExact> v30
     UseType<ImmortalLongExact[3]> v27
     UseType<ImmortalLongExact[4]> v30
-    v38:ImmortalLongExact[7] = LoadConst<ImmortalLongExact[7]>
-    Return v38
+    v39:ImmortalLongExact[7] = LoadConst<ImmortalLongExact[7]>
+    Return v39
   }
 }
 ---
@@ -168,6 +169,84 @@ fun jittestmodule:test {
 
   bb 2 (preds 0) {
     Return v42
+  }
+}
+---
+Diamond
+---
+class Empty:
+  pass
+
+class C:
+  def __init__(self):
+    self.a = 3
+
+def test(cond):
+  c = C()
+  if cond is True:  # No deopt
+    c.a = 4
+  else:
+    c.a = 5
+  Empty()  # Avoid tail duplication
+  return c.a
+---
+fun jittestmodule:test {
+  bb 0 {
+    v14:Object = LoadArg<0; "cond">
+    v15:Nullptr = LoadConst<Nullptr>
+    v52:Nullptr = LoadConst<Nullptr>
+    v54:Nullptr = LoadConst<Nullptr>
+    v56:Nullptr = LoadConst<Nullptr>
+    v16:ObjectUser[C:Exact] = TpAlloc<C> {
+      FrameState {
+        NextInstrOffset 4
+        Locals<2> v14 v15
+      }
+    }
+    v17:MortalFunc[function:0xdeadbeef] = LoadConst<MortalFunc[function:0xdeadbeef]>
+    v47:ImmortalLongExact[3] = LoadConst<ImmortalLongExact[3]>
+    StoreField<a@16> v16 v47 v56
+    v50:NoneType = LoadConst<NoneType>
+    v21:ImmortalBool[True] = LoadConst<ImmortalBool[True]>
+    v36:CBool = PrimitiveCompare<Equal> v14 v21
+    v37:Bool = PrimitiveBoxBool v36
+    UseType<Bool> v37
+    v38:ImmortalBool[True] = LoadConst<ImmortalBool[True]>
+    v40:CInt32 = IntConvert<CInt32> v36
+    CondBranch<1, 2> v40
+  }
+
+  bb 1 (preds 0) {
+    v24:ImmortalLongExact[4] = LoadConst<ImmortalLongExact[4]>
+    StoreField<a@16> v16 v24 v47
+    Branch<3>
+  }
+
+  bb 2 (preds 0) {
+    v27:ImmortalLongExact[5] = LoadConst<ImmortalLongExact[5]>
+    StoreField<a@16> v16 v27 v47
+    Branch<3>
+  }
+
+  bb 3 (preds 1, 2) {
+    v53:Nullptr = LoadConst<Nullptr>
+    v55:Nullptr = LoadConst<Nullptr>
+    v57:Nullptr = LoadConst<Nullptr>
+    v32:ObjectUser[Empty:Exact] = TpAlloc<Empty> {
+      FrameState {
+        NextInstrOffset 38
+        Locals<2> v14 v16
+      }
+    }
+    v34:OptObject = LoadField<a@16, OptObject, borrowed> v16
+    v35:Object = CheckField<"a"> v34 {
+      GuiltyReg v16
+      FrameState {
+        NextInstrOffset 44
+        Locals<2> v14 v16
+      }
+    }
+    Return v35
   }
 }
 ---
