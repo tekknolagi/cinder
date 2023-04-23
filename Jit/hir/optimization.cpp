@@ -1359,6 +1359,21 @@ class VirtualObject {
     }
   }
 
+  void clearAffected(const Instr& instr) {
+    if (!instr.asDeoptBase()) {
+      return;
+    }
+    for (auto it = attrs.begin(); it != attrs.end();) {
+      auto& [offset, reg] = *it;
+      if (reg->isA(TCPtr)) {
+        // This can't live across deopting instructions.
+        it = attrs.erase(it);
+        continue;
+      }
+      it++;
+    }
+  }
+
   static VirtualObject top() {
     VirtualObject result;
     result.is_top = true;
@@ -1423,8 +1438,9 @@ class State {
     for (size_t i = 0; i < instr.NumOperands(); i++) {
       attrs.erase(instr.GetOperand(i));
     }
-    // TODO(emacs): Clear TCPtr and other types that can't be deopt values if
-    // they live across a deopting instruction
+    for (auto& [reg, obj] : attrs) {
+      obj.clearAffected(instr);
+    }
   }
 
   bool operator==(const State& other) const {
@@ -1526,6 +1542,7 @@ void LoadFieldElimination::Run(Function& irfunc) {
         }
         case Opcode::kMakeList: {
           state.alloc(instr.GetOutput());
+          state.clearAffected(instr);
           break;
         }
         case Opcode::kPhi: {

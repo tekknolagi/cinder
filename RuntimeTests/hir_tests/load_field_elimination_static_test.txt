@@ -453,3 +453,67 @@ fun jittestmodule:test {
   }
 }
 ---
+ReloadCPtrAcrossDeopt
+---
+def test(a, b):
+  l = [a, b]
+  c = l[0]
+  print(123)
+  d = l[1]
+  return c + d
+---
+fun jittestmodule:test {
+  bb 0 {
+    v22:Object = LoadArg<0; "a">
+    v23:Object = LoadArg<1; "b">
+    v24:Nullptr = LoadConst<Nullptr>
+    v27:MortalListExact = MakeList<2> v22 v23 {
+      FrameState {
+        NextInstrOffset 8
+        Locals<5> v22 v23 v24 v24 v24
+        Stack<2> v22 v23
+      }
+    }
+    v30:ImmortalLongExact[0] = LoadConst<ImmortalLongExact[0]>
+    v52:CInt64[0] = LoadConst<CInt64[0]>
+    v54:CInt64[0] = LoadConst<CInt64[0]>
+    v33:CInt64 = CheckSequenceBounds v27 v52 {
+      FrameState {
+        NextInstrOffset 18
+        Locals<5> v22 v23 v27 v24 v24
+      }
+    }
+    v34:CPtr = LoadField<ob_item@24, CPtr, borrowed> v27
+    v35:Object = LoadArrayItem v34 v33 v27
+    v37:OptObject = LoadGlobalCached<0; "print">
+    v38:MortalObjectUser[builtin_function_or_method:print:0xdeadbeef] = GuardIs<0xdeadbeef> v37 {
+      Descr 'LOAD_GLOBAL: print'
+    }
+    v39:ImmortalLongExact[123] = LoadConst<ImmortalLongExact[123]>
+    v40:Object = VectorCall<1> v38 v39 {
+      FrameState {
+        NextInstrOffset 26
+        Locals<5> v22 v23 v27 v35 v24
+      }
+    }
+    v42:ImmortalLongExact[1] = LoadConst<ImmortalLongExact[1]>
+    v53:CInt64[1] = LoadConst<CInt64[1]>
+    v55:CInt64[0] = LoadConst<CInt64[0]>
+    v45:CInt64 = CheckSequenceBounds v27 v53 {
+      FrameState {
+        NextInstrOffset 36
+        Locals<5> v22 v23 v27 v35 v24
+      }
+    }
+    v46:CPtr = LoadField<ob_item@24, CPtr, borrowed> v27
+    v47:Object = LoadArrayItem v46 v45 v27
+    v51:Object = BinaryOp<Add> v35 v47 {
+      FrameState {
+        NextInstrOffset 44
+        Locals<5> v22 v23 v27 v35 v47
+      }
+    }
+    Return v51
+  }
+}
+---
