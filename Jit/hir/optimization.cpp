@@ -1431,7 +1431,13 @@ void LoadFieldElimination::Run(Function& irfunc) {
           }
           break;
         }
+        case Opcode::kPhi: {
+          break;
+        }
         default: {
+          if (instr.IsTerminator()) {
+            break;
+          }
           MemoryEffects effects = memoryEffects(instr);
           if (effects.may_store != AEmpty) {
             state.clearAffected(instr);
