@@ -405,69 +405,51 @@ fun jittestmodule:test {
 ---
 DeduplicateLoadListObItem
 ---
-def test(a, b, c):
-  l = [a, b, c]
-  return l[0] + l[1] + l[2]
+def test(a, b):
+  l = [a, b]
+  return l[0] + l[1]
 ---
 fun jittestmodule:test {
   bb 0 {
-    v25:Object = LoadArg<0; "a">
-    v26:Object = LoadArg<1; "b">
-    v27:Object = LoadArg<2; "c">
-    v28:Nullptr = LoadConst<Nullptr>
-    v32:MortalListExact = MakeList<3> v25 v26 v27 {
+    v17:Object = LoadArg<0; "a">
+    v18:Object = LoadArg<1; "b">
+    v19:Nullptr = LoadConst<Nullptr>
+    v22:MortalListExact = MakeList<2> v17 v18 {
       FrameState {
-        NextInstrOffset 10
-        Locals<4> v25 v26 v27 v28
-        Stack<3> v25 v26 v27
+        NextInstrOffset 8
+        Locals<3> v17 v18 v19
+        Stack<2> v17 v18
       }
     }
-    v35:ImmortalLongExact[0] = LoadConst<ImmortalLongExact[0]>
-    v57:CInt64[0] = LoadConst<CInt64[0]>
-    v60:CInt64[0] = LoadConst<CInt64[0]>
-    v38:CInt64 = CheckSequenceBounds v32 v57 {
+    v25:ImmortalLongExact[0] = LoadConst<ImmortalLongExact[0]>
+    v39:CInt64[0] = LoadConst<CInt64[0]>
+    v41:CInt64[0] = LoadConst<CInt64[0]>
+    v28:CInt64 = CheckSequenceBounds v22 v39 {
       FrameState {
-        NextInstrOffset 20
-        Locals<4> v25 v26 v27 v32
+        NextInstrOffset 18
+        Locals<3> v17 v18 v22
       }
     }
-    v39:CPtr = LoadField<ob_item@24, CPtr, borrowed> v32
-    v40:Object = LoadArrayItem v39 v38 v32
-    v42:ImmortalLongExact[1] = LoadConst<ImmortalLongExact[1]>
-    v58:CInt64[1] = LoadConst<CInt64[1]>
-    v61:CInt64[0] = LoadConst<CInt64[0]>
-    v45:CInt64 = CheckSequenceBounds v32 v58 {
+    v29:CPtr = LoadField<ob_item@24, CPtr, borrowed> v22
+    v30:Object = LoadArrayItem v29 v28 v22
+    v32:ImmortalLongExact[1] = LoadConst<ImmortalLongExact[1]>
+    v40:CInt64[1] = LoadConst<CInt64[1]>
+    v42:CInt64[0] = LoadConst<CInt64[0]>
+    v35:CInt64 = CheckSequenceBounds v22 v40 {
+      FrameState {
+        NextInstrOffset 26
+        Locals<3> v17 v18 v22
+        Stack<1> v30
+      }
+    }
+    v37:Object = LoadArrayItem v29 v35 v22
+    v38:Object = BinaryOp<Add> v30 v37 {
       FrameState {
         NextInstrOffset 28
-        Locals<4> v25 v26 v27 v32
-        Stack<1> v40
+        Locals<3> v17 v18 v22
       }
     }
-    v47:Object = LoadArrayItem v39 v45 v32
-    v48:Object = BinaryOp<Add> v40 v47 {
-      FrameState {
-        NextInstrOffset 30
-        Locals<4> v25 v26 v27 v32
-      }
-    }
-    v50:ImmortalLongExact[2] = LoadConst<ImmortalLongExact[2]>
-    v59:CInt64[2] = LoadConst<CInt64[2]>
-    v62:CInt64[0] = LoadConst<CInt64[0]>
-    v53:CInt64 = CheckSequenceBounds v32 v59 {
-      FrameState {
-        NextInstrOffset 38
-        Locals<4> v25 v26 v27 v32
-        Stack<1> v48
-      }
-    }
-    v55:Object = LoadArrayItem v39 v53 v32
-    v56:Object = BinaryOp<Add> v48 v55 {
-      FrameState {
-        NextInstrOffset 40
-        Locals<4> v25 v26 v27 v32
-      }
-    }
-    Return v56
+    Return v38
   }
 }
 ---
