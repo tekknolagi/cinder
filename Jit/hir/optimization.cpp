@@ -1423,6 +1423,8 @@ class State {
     for (size_t i = 0; i < instr.NumOperands(); i++) {
       attrs.erase(instr.GetOperand(i));
     }
+    // TODO(emacs): Clear TCPtr and other types that can't be deopt values if
+    // they live across a deopting instruction
   }
 
   bool operator==(const State& other) const {
@@ -1514,7 +1516,7 @@ void LoadFieldElimination::Run(Function& irfunc) {
             if (value == nullptr) {
               // De-duplicate future loads
               state.store(load->receiver(), load->offset(), load->GetOutput());
-              continue;
+              break;
             }
             if (modify) {
               replacements[&instr] = Assign::create(instr.GetOutput(), value);
