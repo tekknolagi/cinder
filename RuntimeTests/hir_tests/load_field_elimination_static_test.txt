@@ -370,3 +370,36 @@ fun jittestmodule:test {
   }
 }
 ---
+DeduplicateLoadField
+---
+class C:
+  def __init__(self):
+    self.a = 3
+
+def test():
+  c = C()
+  return c.a + c.a
+---
+fun jittestmodule:test {
+  bb 0 {
+    v7:Nullptr = LoadConst<Nullptr>
+    v30:Nullptr = LoadConst<Nullptr>
+    v8:ObjectUser[C:Exact] = TpAlloc<C> {
+      FrameState {
+        NextInstrOffset 4
+        Locals<1> v7
+      }
+    }
+    v9:MortalFunc[function:0xdeadbeef] = LoadConst<MortalFunc[function:0xdeadbeef]>
+    v25:ImmortalLongExact[3] = LoadConst<ImmortalLongExact[3]>
+    StoreField<a@16> v8 v25 v30
+    v28:NoneType = LoadConst<NoneType>
+    UseType<LongExact> v25
+    UseType<LongExact> v25
+    UseType<ImmortalLongExact[3]> v25
+    UseType<ImmortalLongExact[3]> v25
+    v32:ImmortalLongExact[6] = LoadConst<ImmortalLongExact[6]>
+    Return v32
+  }
+}
+---

@@ -1502,16 +1502,18 @@ void LoadFieldElimination::Run(Function& irfunc) {
           break;
         }
         case Opcode::kLoadField: {
-          // TODO(emacs): De-duplicate loads
           auto load = static_cast<const LoadField*>(&instr);
           if (state.isAllocated(load->receiver())) {
             // Only load information about allocations we know about to avoid
             // object aliasing issues.
-            if (Register* value =
-                    state.load(load->receiver(), load->offset())) {
-              if (modify) {
-                replacements[&instr] = Assign::create(instr.GetOutput(), value);
-              }
+            Register* value = state.load(load->receiver(), load->offset());
+            if (value == nullptr) {
+              // De-duplicate future loads
+              state.store(load->receiver(), load->offset(), load->GetOutput());
+              continue;
+            }
+            if (modify) {
+              replacements[&instr] = Assign::create(instr.GetOutput(), value);
             }
           }
           break;
