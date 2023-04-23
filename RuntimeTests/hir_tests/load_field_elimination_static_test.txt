@@ -19,8 +19,6 @@ def test():
 fun jittestmodule:test {
   bb 0 {
     v22:Nullptr = LoadConst<Nullptr>
-    v23:Nullptr = LoadConst<Nullptr>
-    v24:Nullptr = LoadConst<Nullptr>
     v3:ObjectUser[C:Exact] = TpAlloc<C> {
       FrameState {
         NextInstrOffset 4
@@ -28,9 +26,9 @@ fun jittestmodule:test {
     }
     v4:MortalFunc[function:0xdeadbeef] = LoadConst<MortalFunc[function:0xdeadbeef]>
     v14:ImmortalLongExact[3] = LoadConst<ImmortalLongExact[3]>
-    StoreField<a@16> v3 v14 v24
+    StoreField<a@16> v3 v14 v22
     v17:ImmortalLongExact[4] = LoadConst<ImmortalLongExact[4]>
-    StoreField<b@24> v3 v17 v24
+    StoreField<b@24> v3 v17 v22
     v20:NoneType = LoadConst<NoneType>
     Return v3
   }
@@ -51,8 +49,6 @@ fun jittestmodule:test {
   bb 0 {
     v7:Nullptr = LoadConst<Nullptr>
     v35:Nullptr = LoadConst<Nullptr>
-    v36:Nullptr = LoadConst<Nullptr>
-    v37:Nullptr = LoadConst<Nullptr>
     v8:ObjectUser[C:Exact] = TpAlloc<C> {
       FrameState {
         NextInstrOffset 4
@@ -61,16 +57,16 @@ fun jittestmodule:test {
     }
     v9:MortalFunc[function:0xdeadbeef] = LoadConst<MortalFunc[function:0xdeadbeef]>
     v27:ImmortalLongExact[3] = LoadConst<ImmortalLongExact[3]>
-    StoreField<a@16> v8 v27 v37
+    StoreField<a@16> v8 v27 v35
     v30:ImmortalLongExact[4] = LoadConst<ImmortalLongExact[4]>
-    StoreField<b@24> v8 v30 v37
+    StoreField<b@24> v8 v30 v35
     v33:NoneType = LoadConst<NoneType>
     UseType<LongExact> v27
     UseType<LongExact> v30
     UseType<ImmortalLongExact[3]> v27
     UseType<ImmortalLongExact[4]> v30
-    v39:ImmortalLongExact[7] = LoadConst<ImmortalLongExact[7]>
-    Return v39
+    v37:ImmortalLongExact[7] = LoadConst<ImmortalLongExact[7]>
+    Return v37
   }
 }
 ---
@@ -89,7 +85,6 @@ fun jittestmodule:test {
   bb 0 {
     v7:Nullptr = LoadConst<Nullptr>
     v30:Nullptr = LoadConst<Nullptr>
-    v31:Nullptr = LoadConst<Nullptr>
     v8:ObjectUser[C:Exact] = TpAlloc<C> {
       FrameState {
         NextInstrOffset 4
@@ -98,7 +93,7 @@ fun jittestmodule:test {
     }
     v9:MortalFunc[function:0xdeadbeef] = LoadConst<MortalFunc[function:0xdeadbeef]>
     v25:ImmortalLongExact[3] = LoadConst<ImmortalLongExact[3]>
-    StoreField<a@16> v8 v25 v31
+    StoreField<a@16> v8 v25 v30
     v28:NoneType = LoadConst<NoneType>
     v12:OptObject = LoadGlobalCached<0; "print">
     v13:MortalObjectUser[builtin_function_or_method:print:0xdeadbeef] = GuardIs<0xdeadbeef> v12 {
@@ -140,8 +135,6 @@ fun jittestmodule:test {
     v10:Object = LoadArg<0; "cond">
     v11:Nullptr = LoadConst<Nullptr>
     v47:Nullptr = LoadConst<Nullptr>
-    v48:Nullptr = LoadConst<Nullptr>
-    v49:Nullptr = LoadConst<Nullptr>
     v12:ObjectUser[C:Exact] = TpAlloc<C> {
       FrameState {
         NextInstrOffset 4
@@ -150,9 +143,9 @@ fun jittestmodule:test {
     }
     v13:MortalFunc[function:0xdeadbeef] = LoadConst<MortalFunc[function:0xdeadbeef]>
     v39:ImmortalLongExact[3] = LoadConst<ImmortalLongExact[3]>
-    StoreField<a@16> v12 v39 v49
+    StoreField<a@16> v12 v39 v47
     v42:ImmortalLongExact[4] = LoadConst<ImmortalLongExact[4]>
-    StoreField<b@24> v12 v42 v49
+    StoreField<b@24> v12 v42 v47
     v45:NoneType = LoadConst<NoneType>
     v17:ImmortalBool[True] = LoadConst<ImmortalBool[True]>
     v26:CBool = PrimitiveCompare<Equal> v10 v17
@@ -195,8 +188,6 @@ fun jittestmodule:test {
     v14:Object = LoadArg<0; "cond">
     v15:Nullptr = LoadConst<Nullptr>
     v52:Nullptr = LoadConst<Nullptr>
-    v54:Nullptr = LoadConst<Nullptr>
-    v56:Nullptr = LoadConst<Nullptr>
     v16:ObjectUser[C:Exact] = TpAlloc<C> {
       FrameState {
         NextInstrOffset 4
@@ -205,7 +196,7 @@ fun jittestmodule:test {
     }
     v17:MortalFunc[function:0xdeadbeef] = LoadConst<MortalFunc[function:0xdeadbeef]>
     v47:ImmortalLongExact[3] = LoadConst<ImmortalLongExact[3]>
-    StoreField<a@16> v16 v47 v56
+    StoreField<a@16> v16 v47 v52
     v50:NoneType = LoadConst<NoneType>
     v21:ImmortalBool[True] = LoadConst<ImmortalBool[True]>
     v36:CBool = PrimitiveCompare<Equal> v14 v21
@@ -229,9 +220,6 @@ fun jittestmodule:test {
   }
 
   bb 3 (preds 1, 2) {
-    v53:Nullptr = LoadConst<Nullptr>
-    v55:Nullptr = LoadConst<Nullptr>
-    v57:Nullptr = LoadConst<Nullptr>
     v32:ObjectUser[Empty:Exact] = TpAlloc<Empty> {
       FrameState {
         NextInstrOffset 38

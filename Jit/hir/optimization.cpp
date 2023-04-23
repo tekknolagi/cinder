@@ -1430,7 +1430,8 @@ std::ostream& operator<<(std::ostream& os, const State& state) {
 
 void LoadFieldElimination::Run(Function& irfunc) {
   UnorderedMap<Instr*, Instr*> replacements;
-  auto run_block = [&irfunc, &replacements](
+  Register* null_reg = nullptr;
+  auto run_block = [&irfunc, &replacements, &null_reg](
                        BasicBlock* block,
                        const State& state_in,
                        bool modify = false) -> State {
@@ -1439,8 +1440,10 @@ void LoadFieldElimination::Run(Function& irfunc) {
       switch (instr.opcode()) {
         case Opcode::kTpAlloc: {
           auto alloc = static_cast<const TpAlloc*>(&instr);
-          Register* null_reg = irfunc.env.AllocateRegister();
-          LoadConst::create(null_reg, TNullptr)->InsertBefore(instr);
+          if (null_reg == nullptr) {
+            null_reg = irfunc.env.AllocateRegister();
+            LoadConst::create(null_reg, TNullptr)->InsertBefore(instr);
+          }
           state.alloc(instr.GetOutput(), alloc->pytype(), null_reg);
           break;
         }
