@@ -1393,9 +1393,11 @@ class State {
       if (mp->type == T_OBJECT || mp->type == T_OBJECT_EX) {
         obj.write(mp->offset, get_zero(TNullptr));
       } else if (mp->type == T_BYTE) {
-        obj.write(mp->offset, get_zero(Type::fromCUInt(0, TCUInt8)));
-      } else if (mp->type == T_CHAR) {
         obj.write(mp->offset, get_zero(Type::fromCInt(0, TCInt8)));
+      } else if (mp->type == T_UBYTE) {
+        obj.write(mp->offset, get_zero(Type::fromCUInt(0, TCUInt8)));
+      } else if (mp->type == T_BOOL) {
+        obj.write(mp->offset, get_zero(Type::fromCBool(false));
       }
     }
     attrs.emplace(reg, std::move(obj));
