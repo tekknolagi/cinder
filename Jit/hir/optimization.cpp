@@ -1382,6 +1382,10 @@ std::ostream& operator<<(std::ostream& os, const VirtualObject& obj) {
 
 class State {
  public:
+  void alloc(Register* reg) {
+    attrs.emplace(reg, VirtualObject());
+  }
+
   void alloc(
       Register* reg,
       PyTypeObject* type,
@@ -1516,6 +1520,10 @@ void LoadFieldElimination::Run(Function& irfunc) {
               replacements[&instr] = Assign::create(instr.GetOutput(), value);
             }
           }
+          break;
+        }
+        case Opcode::kMakeList: {
+          state.alloc(instr.GetOutput());
           break;
         }
         case Opcode::kPhi: {
