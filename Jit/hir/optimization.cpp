@@ -1351,6 +1351,8 @@ class VirtualObject {
         it = attrs.erase(it);
         continue;
       }
+      // TODO(max): Put a Phi in to merge identical constants that come in from
+      // different branches?
       JIT_CHECK(
           value == it->second, "value mismatch! %s != %s", *value, *it->second);
       it++;
