@@ -238,3 +238,97 @@ fun jittestmodule:test {
   }
 }
 ---
+Loop
+---
+class C:
+  def __init__(self):
+    self.a = 3
+
+def test(cond):
+  c = C()
+  result = 0
+  for i in range(10):
+    result += c.a
+  return result
+---
+fun jittestmodule:test {
+  bb 0 {
+    v17:Object = LoadArg<0; "cond">
+    v18:Nullptr = LoadConst<Nullptr>
+    v64:Nullptr = LoadConst<Nullptr>
+    v19:ObjectUser[C:Exact] = TpAlloc<C> {
+      FrameState {
+        NextInstrOffset 4
+        Locals<4> v17 v18 v18 v18
+      }
+    }
+    v20:MortalFunc[function:0xdeadbeef] = LoadConst<MortalFunc[function:0xdeadbeef]>
+    v59:ImmortalLongExact[3] = LoadConst<ImmortalLongExact[3]>
+    StoreField<a@16> v19 v59 v64
+    v62:NoneType = LoadConst<NoneType>
+    v23:ImmortalLongExact[0] = LoadConst<ImmortalLongExact[0]>
+    v25:OptObject = LoadGlobalCached<0; "range">
+    v26:ImmortalTypeExact[range:obj] = GuardIs<0xdeadbeef> v25 {
+      Descr 'LOAD_GLOBAL: range'
+    }
+    v27:ImmortalLongExact[10] = LoadConst<ImmortalLongExact[10]>
+    v28:Object = VectorCall<1> v26 v27 {
+      FrameState {
+        NextInstrOffset 24
+        Locals<4> v17 v19 v23 v18
+      }
+    }
+    v29:Object = GetIter v28 {
+      FrameState {
+        NextInstrOffset 26
+        Locals<4> v17 v19 v23 v18
+      }
+    }
+    Branch<4>
+  }
+
+  bb 4 (preds 0, 2) {
+    v35:Object = Phi<0, 2> v23 v50
+    v36:OptObject = Phi<0, 2> v18 v43
+    v31:CInt32 = LoadEvalBreaker
+    CondBranch<5, 1> v31
+  }
+
+  bb 5 (preds 4) {
+    v37:CInt32 = RunPeriodicTasks {
+      FrameState {
+        NextInstrOffset 26
+        Locals<4> v17 v19 v35 v36
+        Stack<1> v29
+      }
+    }
+    Branch<1>
+  }
+
+  bb 1 (preds 4, 5) {
+    v43:Object = InvokeIterNext v29 {
+      FrameState {
+        NextInstrOffset 28
+        Locals<4> v17 v19 v35 v36
+        Stack<1> v29
+      }
+    }
+    CondBranchIterNotDone<2, 3> v43
+  }
+
+  bb 2 (preds 1) {
+    v50:Object = InPlaceOp<Add> v35 v59 {
+      FrameState {
+        NextInstrOffset 38
+        Locals<4> v17 v19 v35 v43
+        Stack<1> v29
+      }
+    }
+    Branch<4>
+  }
+
+  bb 3 (preds 1) {
+    Return v35
+  }
+}
+---

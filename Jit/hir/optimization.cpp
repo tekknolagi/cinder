@@ -1337,6 +1337,13 @@ class VirtualObject {
   }
 
   void meet(const VirtualObject& other) {
+    if (is_top) {
+      *this = other;
+      return;
+    }
+    if (other.is_top) {
+      return;
+    }
     for (auto it = attrs.begin(); it != attrs.end();) {
       auto& [offset, value] = *it;
       auto other_it = other.attrs.find(offset);
@@ -1350,7 +1357,14 @@ class VirtualObject {
     }
   }
 
+  static VirtualObject top() {
+    VirtualObject result;
+    result.is_top = true;
+    return result;
+  }
+
  private:
+  bool is_top = false;
   std::map<size_t, Register*> attrs;
   friend std::ostream& operator<<(std::ostream& os, const VirtualObject& state);
 };
@@ -1391,10 +1405,9 @@ class State {
   }
 
   void clearAffected(const Instr& instr) {
-    instr.visitUses([this](Register* reg) -> bool {
-      attrs.erase(reg);
-      return true;
-    });
+    for (size_t i = 0; i < instr.NumOperands(); i++) {
+      attrs.erase(instr.GetOperand(i));
+    }
   }
 
   bool operator==(const State& other) const {
@@ -1402,6 +1415,13 @@ class State {
   }
 
   void meet(const State& other) {
+    if (is_top) {
+      *this = other;
+      return;
+    }
+    if (other.is_top) {
+      return;
+    }
     for (auto it = attrs.begin(); it != attrs.end();) {
       auto& [reg, obj] = *it;
       auto other_it = other.attrs.find(reg);
@@ -1414,7 +1434,14 @@ class State {
     }
   }
 
+  static State top() {
+    State result;
+    result.is_top = true;
+    return result;
+  }
+
  private:
+  bool is_top = false;
   std::unordered_map<Register*, VirtualObject> attrs;
   friend std::ostream& operator<<(std::ostream& os, const State& state);
 };
@@ -1489,24 +1516,23 @@ void LoadFieldElimination::Run(Function& irfunc) {
     }
     return state;
   };
-  // Run until fixpoint
   UnorderedMap<BasicBlock*, State> state_out;
+  // Initialize all to Top
+  for (auto& block : irfunc.cfg.GetRPOTraversal()) {
+    state_out[block] = State::top();
+  }
   auto state_in = [&state_out](BasicBlock* block) -> State {
     const std::unordered_set<const Edge*>& edges = block->in_edges();
     if (edges.size() == 0) {
       return State();
     }
-    if (edges.size() == 1) {
-      return state_out[(*edges.begin())->from()];
-    }
-    auto it = edges.begin();
-    State result = state_out[(*it)->from()];
-    it++;
-    for (; it != edges.end(); it++) {
-      result.meet(state_out[(*it)->from()]);
+    State result = State::top();
+    for (const Edge* edge : edges) {
+      result.meet(state_out[edge->from()]);
     }
     return result;
   };
+  // Run until fixpoint
   for (bool changed = true; changed;) {
     changed = false;
     for (auto& block : irfunc.cfg.GetRPOTraversal()) {
