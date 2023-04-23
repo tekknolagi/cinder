@@ -117,3 +117,17 @@ fun jittestmodule:test {
   }
 }
 ---
+If
+---
+class C:
+  def __init__(self):
+    self.a = 3
+    self.b = 4
+
+def test(cond):
+  c = C()
+  if cond is True:  # No deopt
+    return c.a
+  return c.b
+---
+---
