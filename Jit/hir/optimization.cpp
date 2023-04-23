@@ -1332,6 +1332,10 @@ class VirtualObject {
     return map_get(attrs, offset, nullptr);
   }
 
+  bool operator==(const VirtualObject& other) const {
+    return attrs == other.attrs;
+  }
+
  private:
   std::map<size_t, Register*> attrs;
   friend std::ostream& operator<<(std::ostream& os, const VirtualObject& state);
@@ -1379,6 +1383,10 @@ class State {
     });
   }
 
+  bool operator==(const State& other) const {
+    return attrs == other.attrs;
+  }
+
  private:
   std::unordered_map<Register*, VirtualObject> attrs;
   friend std::ostream& operator<<(std::ostream& os, const State& state);
@@ -1393,13 +1401,15 @@ std::ostream& operator<<(std::ostream& os, const State& state) {
   return os;
 }
 
-// TODO(emacs): Make a meet function and meet() states to do inter-block
-// LoadElimination!
 void LoadFieldElimination::Run(Function& irfunc) {
   UnorderedMap<Instr*, Instr*> replacements;
-  for (auto& block : irfunc.cfg.GetRPOTraversal()) {
-    State state;
+  auto run_block = [&irfunc, &replacements](
+                       BasicBlock* block,
+                       const State& state_in,
+                       bool modify = false) -> State {
+    State state = state_in;
     for (auto& instr : *block) {
+      std::cerr << instr << std::endl;
       switch (instr.opcode()) {
         case Opcode::kTpAlloc: {
           auto alloc = static_cast<const TpAlloc*>(&instr);
@@ -1426,7 +1436,9 @@ void LoadFieldElimination::Run(Function& irfunc) {
             // object aliasing issues.
             if (Register* value =
                     state.load(load->receiver(), load->offset())) {
-              replacements[&instr] = Assign::create(instr.GetOutput(), value);
+              if (modify) {
+                replacements[&instr] = Assign::create(instr.GetOutput(), value);
+              }
             }
           }
           break;
@@ -1446,7 +1458,33 @@ void LoadFieldElimination::Run(Function& irfunc) {
         }
       }
     }
+    return state;
+  };
+  // Run until fixpoint
+  UnorderedMap<BasicBlock*, State> state_out;
+  for (bool changed = true; changed;) {
+    changed = false;
+    for (auto& block : irfunc.cfg.GetRPOTraversal()) {
+      State state_in;
+      for (const Edge* edge : block->in_edges()) {
+        state_in.meet(state_out[edge->to()]);
+      }
+      State new_state = run_block(block, state_in);
+      if (new_state != state_out[block]) {
+        changed = true;
+        state_out[block] = new_state;
+      }
+    }
   }
+  // Gather all the unnecessary LoadField instructions
+  for (auto& block : irfunc.cfg.GetRPOTraversal()) {
+    State state_in;
+    for (const Edge* edge : block->in_edges()) {
+      state_in.meet(state_out[edge->to()]);
+    }
+    state_out[block] = run_block(block, state_in, /*modify=*/true);
+  }
+  // Replace all the unnecessary LoadField instructions
   for (auto& [instr, replacement] : replacements) {
     instr->GetOutput()->set_instr(replacement);
     instr->ReplaceWith(*replacement);
