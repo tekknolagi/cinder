@@ -332,3 +332,41 @@ fun jittestmodule:test {
   }
 }
 ---
+RemoveLoadFieldPrimitive
+---
+from __static__ import int8
+
+class C:
+  def __init__(self):
+    self.a: int8 = 3
+    self.b: int8 = 4
+
+def test() -> int8:
+  c = C()
+  return c.a + c.b
+---
+fun jittestmodule:test {
+  bb 0 {
+    v7:Nullptr = LoadConst<Nullptr>
+    v37:CUInt8[0] = LoadConst<CUInt8[0]>
+    v8:ObjectUser[C:Exact] = TpAlloc<C> {
+      FrameState {
+        NextInstrOffset 4
+        Locals<1> v7
+      }
+    }
+    v9:MortalFunc[function:0xdeadbeef] = LoadConst<MortalFunc[function:0xdeadbeef]>
+    v27:CInt8[3] = LoadConst<CInt8[3]>
+    v29:Nullptr = LoadConst<Nullptr>
+    UseType<CInt8> v27
+    StoreField<a@16> v8 v27 v29
+    v31:CInt8[4] = LoadConst<CInt8[4]>
+    v33:Nullptr = LoadConst<Nullptr>
+    UseType<CInt8> v31
+    StoreField<b@17> v8 v31 v33
+    v35:NoneType = LoadConst<NoneType>
+    v16:CInt8 = IntBinaryOp<Add> v27 v31
+    Return<CInt8> v16
+  }
+}
+---
