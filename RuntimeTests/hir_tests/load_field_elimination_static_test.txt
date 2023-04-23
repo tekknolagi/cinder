@@ -348,7 +348,7 @@ def test() -> int8:
 fun jittestmodule:test {
   bb 0 {
     v7:Nullptr = LoadConst<Nullptr>
-    v37:CUInt8[0] = LoadConst<CUInt8[0]>
+    v37:CInt8[0] = LoadConst<CInt8[0]>
     v8:ObjectUser[C:Exact] = TpAlloc<C> {
       FrameState {
         NextInstrOffset 4

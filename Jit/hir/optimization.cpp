@@ -1397,7 +1397,7 @@ class State {
       } else if (mp->type == T_UBYTE) {
         obj.write(mp->offset, get_zero(Type::fromCUInt(0, TCUInt8)));
       } else if (mp->type == T_BOOL) {
-        obj.write(mp->offset, get_zero(Type::fromCBool(false));
+        obj.write(mp->offset, get_zero(Type::fromCBool(false)));
       }
     }
     attrs.emplace(reg, std::move(obj));
