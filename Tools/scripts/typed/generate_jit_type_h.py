@@ -52,6 +52,7 @@ BASIC_FINAL_TYPES: List[str] = [
     "NoneType",
     "Slice",
     "WaitHandle",
+    "ListIterator",
 ]
 
 # Basic types that can be subtyped by users. These will be expanded into *User
