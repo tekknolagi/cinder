@@ -259,6 +259,34 @@ Register* simplifyCast(const Cast* instr) {
   return nullptr;
 }
 
+Register* simplifyGetIter(Env& env, const GetIter* instr) {
+  Register* iterable = instr->iterable();
+  if (iterable->isA(TListExact)) {
+    env.emit<UseType>(iterable, TListExact);
+    Register* iterator =
+        env.emit<TpAlloc>(&PyListIter_Type, *instr->frameState());
+    Register* zero = env.emit<LoadConst>(Type::fromCInt(0, TCInt64));
+    Register* null = env.emit<LoadConst>(TNullptr);
+    env.emit<StoreField>(
+        iterator,
+        "it_index",
+        offsetof(listiterobject, it_index),
+        zero,
+        TCInt64,
+        null);
+    env.emit<StoreField>(
+        iterator,
+        "it_seq",
+        offsetof(listiterobject, it_seq),
+        iterable,
+        TListExact,
+        null);
+    // TODO(emacs): Call _PyObject_GC_TRACK?
+    return iterator;
+  }
+  return nullptr;
+}
+
 Register* emitGetLengthInt64(Env& env, Register* obj) {
   Type ty = obj->type();
   if (ty <= TListExact || ty <= TTupleExact || ty <= TArray) {
@@ -1148,6 +1176,8 @@ Register* simplifyInstr(Env& env, const Instr* instr) {
       return simplifyCondBranchCheckType(
           env, static_cast<const CondBranchCheckType*>(instr));
 
+    case Opcode::kGetIter:
+      return simplifyGetIter(env, static_cast<const GetIter*>(instr));
     case Opcode::kGetLength:
       return simplifyGetLength(env, static_cast<const GetLength*>(instr));
 

@@ -2675,3 +2675,77 @@ fun test {
   }
 }
 ---
+GetIterWithObjectEmitsGetIter
+---
+# HIR
+fun test {
+   bb 0 {
+     v0 = LoadArg<0, Object>
+     v1 = GetIter v0
+     Return v1
+   }
+}
+---
+fun test {
+  bb 0 {
+    v0:Object = LoadArg<0>
+    v1:Object = GetIter v0 {
+      FrameState {
+        NextInstrOffset 0
+      }
+    }
+    Return v1
+  }
+}
+---
+GetIterWithListEmitsGetIter
+---
+# HIR
+fun test {
+   bb 0 {
+     v0 = LoadArg<0, List>
+     v1 = GetIter v0
+     Return v1
+   }
+}
+---
+fun test {
+  bb 0 {
+    v0:List = LoadArg<0, List>
+    v1:Object = GetIter v0 {
+      FrameState {
+        NextInstrOffset 0
+      }
+    }
+    Return v1
+  }
+}
+---
+GetIterWithListExactEmitsTpAlloc
+---
+# HIR
+fun test {
+   bb 0 {
+     v0 = LoadArg<0, ListExact>
+     v1 = GetIter v0
+     Return v1
+   }
+}
+---
+fun test {
+  bb 0 {
+    v0:ListExact = LoadArg<0, ListExact>
+    UseType<ListExact> v0
+    v2:ObjectUser[list_iterator:Exact] = TpAlloc<list_iterator> {
+      FrameState {
+        NextInstrOffset 0
+      }
+    }
+    v3:CInt64[0] = LoadConst<CInt64[0]>
+    v4:Nullptr = LoadConst<Nullptr>
+    StoreField<it_index@16> v2 v3 v4
+    StoreField<it_seq@24> v2 v0 v4
+    Return v2
+  }
+}
+---

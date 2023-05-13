@@ -21,6 +21,13 @@ typedef struct {
     Py_ssize_t allocated;
 } PyListObject;
 
+typedef struct {
+    PyObject_HEAD
+    Py_ssize_t it_index;
+    PyListObject *it_seq; /* Set to NULL when iterator is exhausted */
+} listiterobject;
+
+
 PyAPI_FUNC(PyObject *) _PyList_Extend(PyListObject *, PyObject *);
 PyAPI_FUNC(void) _PyList_DebugMallocStats(FILE *out);
 
