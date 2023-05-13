@@ -52,7 +52,7 @@ constexpr size_t kRefcountOffset = offsetof(PyObject, ob_refcnt);
 
 // _Py_RefTotal is only defined when Py_REF_DEBUG is defined.
 const size_t kRefTotalAddr = reinterpret_cast<size_t>(
-#ifdef Py_REF_DEBUG
+#ifdef Py_REF_DEBUGx
     &_Py_RefTotal
 #else
     nullptr
