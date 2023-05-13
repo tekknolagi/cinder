@@ -398,7 +398,7 @@ void LIRGenerator::MakeIncref(
     bbb.AppendLabel(GetSafeLabelName());
     bbb.AppendCode(
         "Store {}, {}:CUInt32, {:#x}", r1, obj, offsetof(PyObject, ob_refcnt));
-#ifdef Py_DEBUG
+#ifdef xPy_DEBUG
     bbb.AppendCode(
         "Load {}, {:#x}", r0, reinterpret_cast<uint64_t>(&_Py_RefTotal));
     bbb.AppendCode("Inc {}", r0);
@@ -411,7 +411,7 @@ void LIRGenerator::MakeIncref(
   }
 #endif
 
-#ifdef Py_DEBUG
+#ifdef xPy_DEBUG
   bbb.AppendCode(
       "Load {}, {:#x}", r0, reinterpret_cast<uint64_t>(&_Py_RefTotal));
   bbb.AppendCode("Inc {}", r0);
@@ -458,7 +458,7 @@ void LIRGenerator::MakeDecref(
   }
 #endif
 
-#ifdef Py_DEBUG
+#ifdef xPy_DEBUG
   auto r0 = GetSafeTempName();
   bbb.AppendCode(
       "Load {}, {:#x}", r0, reinterpret_cast<uint64_t>(&_Py_RefTotal));
