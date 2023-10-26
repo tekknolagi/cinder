@@ -681,6 +681,10 @@ class Instr {
     return nullptr;
   }
 
+  virtual bool isElidable() {
+    return asDeoptBase() == nullptr;
+  }
+
   virtual const DeoptBase* asDeoptBase() const {
     return nullptr;
   }
@@ -2600,6 +2604,10 @@ class INSTR_CLASS(
     return type_;
   }
 
+  bool isElidable() const override {
+    return true;
+  }
+
  private:
   Type type_;
 };
@@ -2894,12 +2902,22 @@ class LoadMethodBase : public DeoptBaseWithNameIdx {
 
 // Like LoadAttr, but when we know that we're loading an attribute that will be
 // used for a method call.
-DEFINE_SIMPLE_INSTR(
-    LoadMethod,
-    (TObject),
-    HasOutput,
-    Operands<1>,
-    LoadMethodBase);
+INSTR_CLASS(LoadMethod, (TObject), HasOutput, Operands<1>, LoadMethodBase) {
+ public:
+  bool isElidable() const override {
+    // This is a list of common builtin types whose methods cannot be
+    // overwritten from managed code and for which looking up the methods is
+    // guaranteed to not do anything "weird" that needs to happen at runtime,
+    // like make a network request.
+    Type receiver_type = receiver()->type();
+    return receiver_type <= TArray || receiver_type <= TBool ||
+        receiver_type <= TBytesExact || receiver_type <= TCode ||
+        receiver_type <= TDictExact || receiver_type <= TFloatExact ||
+        receiver_type <= TListExact || receiver_type <= TLongExact ||
+        receiver_type <= TNoneType || receiver_type <= TSetExact ||
+        receiver_type <= TTupleExact || receiver_type <= TUnicodeExact;
+  }
+}
 
 // Like LoadMethod, but specialized for loading a method from a module
 DEFINE_SIMPLE_INSTR(

@@ -331,7 +331,7 @@ void PhiElimination::Run(Function& func) {
 
 static bool isUseful(Instr& instr) {
   return instr.IsTerminator() || instr.IsSnapshot() ||
-      (instr.asDeoptBase() != nullptr && !instr.IsPrimitiveBox()) ||
+      (instr.asDeoptBase() != nullptr && !instr.isElidable()) ||
       (!instr.IsPhi() && memoryEffects(instr).may_store != AEmpty);
 }
 
@@ -1172,24 +1172,11 @@ static bool tryEliminateLoadMethod(Function& irfunc, MethodInvoke& invoke) {
   PyObject* names = code->co_names;
   PyObject* name = PyTuple_GetItem(names, invoke.load_method->name_idx());
   JIT_DCHECK(name != nullptr, "name must not be null");
-  Register* receiver = invoke.load_method->receiver();
-  Type receiver_type = receiver->type();
-  // This is a list of common builtin types whose methods cannot be overwritten
-  // from managed code and for which looking up the methods is guaranteed to
-  // not do anything "weird" that needs to happen at runtime, like make a
-  // network request.
-  // Note that due to the different staticmethod/classmethod/other descriptors,
-  // loading and invoking methods off an instance (e.g. {}.fromkeys(...)) is
-  // resolved and called differently than from the type (e.g.
-  // dict.fromkeys(...)). The code below handles the instance case only.
-  if (!(receiver_type <= TArray || receiver_type <= TBool ||
-        receiver_type <= TBytesExact || receiver_type <= TCode ||
-        receiver_type <= TDictExact || receiver_type <= TFloatExact ||
-        receiver_type <= TListExact || receiver_type <= TLongExact ||
-        receiver_type <= TNoneType || receiver_type <= TSetExact ||
-        receiver_type <= TTupleExact || receiver_type <= TUnicodeExact)) {
+  if (!invoke.load_method->isElidable()) {
     return false;
   }
+  Register* receiver = invoke.load_method->receiver();
+  Type receiver_type = receiver->type();
   PyTypeObject* type = receiver_type.runtimePyType();
   if (type == nullptr) {
     // This might happen for a variety of reasons, such as encountering a
@@ -1241,13 +1228,17 @@ static bool tryEliminateLoadMethod(Function& irfunc, MethodInvoke& invoke) {
     call_static->SetOperand(i, invoke.call_method->GetOperand(i));
   }
   auto use_type = UseType::create(receiver, receiver_type.unspecialized());
-  invoke.load_method->ExpandInto({use_type, load_const});
-  invoke.get_instance->ReplaceWith(
-      *Assign::create(invoke.get_instance->dst(), receiver));
-  invoke.call_method->ReplaceWith(*call_static);
-  delete invoke.load_method;
-  delete invoke.get_instance;
-  delete invoke.call_method;
+  // invoke.load_method->ExpandInto({use_type, load_const});
+  // invoke.get_instance->ReplaceWith(
+  //     *Assign::create(invoke.get_instance->dst(), receiver));
+  Assign::create(invoke.get_instance->dst(), receiver)->InsertBefore(invoke.get_instance);
+  use_type->InsertBefore(invoke.call_method);
+  load_const->InsertBefore(invoke.call_method);
+  call_static->InsertBefore(invoke.call_method);
+  // invoke.call_method->ExpandInto({use_type, load_const, call_static});
+  // delete invoke.load_method;
+  // delete invoke.get_instance;
+  // delete invoke.call_method;
   return true;
 }
 
