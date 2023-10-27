@@ -2902,11 +2902,12 @@ class LoadMethodBase : public DeoptBaseWithNameIdx {
 
 // Like LoadAttr, but when we know that we're loading an attribute that will be
 // used for a method call.
-class INSTR_CLASS(LoadMethod,
-            (TObject),
-            HasOutput,
-            Operands<1>,
-            LoadMethodBase) {
+class INSTR_CLASS(
+    LoadMethod,
+    (TObject),
+    HasOutput,
+    Operands<1>,
+    LoadMethodBase) {
  public:
   bool isElidable() const override {
     // This is a list of common builtin types whose methods cannot be
@@ -2921,6 +2922,10 @@ class INSTR_CLASS(LoadMethod,
         receiver_type <= TNoneType || receiver_type <= TSetExact ||
         receiver_type <= TTupleExact || receiver_type <= TUnicodeExact;
   }
+
+ private:
+  friend InstrT;
+  using InstrT::InstrT;
 };
 
 // Like LoadMethod, but specialized for loading a method from a module
