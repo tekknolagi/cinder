@@ -1231,10 +1231,10 @@ static bool tryEliminateLoadMethod(Function& irfunc, MethodInvoke& invoke) {
   // invoke.load_method->ExpandInto({use_type, load_const});
   // invoke.get_instance->ReplaceWith(
   //     *Assign::create(invoke.get_instance->dst(), receiver));
-  Assign::create(invoke.get_instance->dst(), receiver)->InsertBefore(invoke.get_instance);
-  use_type->InsertBefore(invoke.call_method);
-  load_const->InsertBefore(invoke.call_method);
-  call_static->InsertBefore(invoke.call_method);
+  Assign::create(invoke.get_instance->dst(), receiver)->InsertBefore(*invoke.get_instance);
+  use_type->InsertBefore(*invoke.call_method);
+  load_const->InsertBefore(*invoke.call_method);
+  call_static->InsertBefore(*invoke.call_method);
   // invoke.call_method->ExpandInto({use_type, load_const, call_static});
   // delete invoke.load_method;
   // delete invoke.get_instance;

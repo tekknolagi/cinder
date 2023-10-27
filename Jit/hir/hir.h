@@ -681,7 +681,7 @@ class Instr {
     return nullptr;
   }
 
-  virtual bool isElidable() {
+  virtual bool isElidable() const {
     return asDeoptBase() == nullptr;
   }
 
@@ -2902,7 +2902,11 @@ class LoadMethodBase : public DeoptBaseWithNameIdx {
 
 // Like LoadAttr, but when we know that we're loading an attribute that will be
 // used for a method call.
-INSTR_CLASS(LoadMethod, (TObject), HasOutput, Operands<1>, LoadMethodBase) {
+class INSTR_CLASS(LoadMethod,
+            (TObject),
+            HasOutput,
+            Operands<1>,
+            LoadMethodBase) {
  public:
   bool isElidable() const override {
     // This is a list of common builtin types whose methods cannot be
@@ -2917,7 +2921,7 @@ INSTR_CLASS(LoadMethod, (TObject), HasOutput, Operands<1>, LoadMethodBase) {
         receiver_type <= TNoneType || receiver_type <= TSetExact ||
         receiver_type <= TTupleExact || receiver_type <= TUnicodeExact;
   }
-}
+};
 
 // Like LoadMethod, but specialized for loading a method from a module
 DEFINE_SIMPLE_INSTR(
